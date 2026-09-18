@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="en" class="dark scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Syllabus-to-Notes Agent Pipeline | Bharat Builds Tour (WeMakeDevs × AWS)</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        aws: {
+                            orange: '#FF9900',
+                            squid: '#232F3E',
+                            dark: '#131A22',
+                            light: '#EC7211'
+                        },
+                        obsidian: {
+                            purple: '#7C3AED',
+                            accent: '#A855F7',
+                            dark: '#181825',
+                            card: '#1e1e2e'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- FontAwesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0b0f19;
+            color: #f3f4f6;
+        }
+        .glow-aws {
+            box-shadow: 0 0 35px -5px rgba(255, 153, 0, 0.25);
+        }
+        .glow-purple {
+            box-shadow: 0 0 35px -5px rgba(168, 85, 247, 0.25);
+        }
+        .bg-grid {
+            background-size: 30px 30px;
+            background-image:
+                linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+        }
+        .glass-panel {
+            background: rgba(23, 29, 45, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .glass-card {
+            background: rgba(30, 41, 59, 0.6);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.07);
+        }
+        .glass-card:hover {
+            border-color: rgba(255, 153, 0, 0.4);
+        }
+        .text-gradient-aws {
+            background: linear-gradient(135deg, #FF9900 0%, #FFC72C 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .text-gradient-obsidian {
+            background: linear-gradient(135deg, #C084FC 0%, #a855f7 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .agent-connector {
+            position: relative;
+        }
+        .agent-connector::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            right: -20px;
+            width: 20px;
+            height: 2px;
+            background: linear-gradient(90deg, #FF9900, #a855f7);
+            z-index: 10;
+        }
+    </style>
+</head>
+<body class="bg-grid antialiased selection:bg-aws-orange selection:text-black">
+
+    <!-- Header / Navbar -->
+    <header class="sticky top-0 z-50 glass-panel border-b border-slate-800/80">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+            <!-- Brand Logo -->
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-aws-orange via-purple-600 to-indigo-500 flex items-center justify-center font-bold text-white shadow-lg">
+                    <i class="fa-solid fa-brain text-xl"></i>
+                </div>
+                <div>
+                    <span class="font-extrabold text-lg text-white tracking-tight flex items-center gap-2">
+                        Syllabus2Notes <span class="bg-aws-squid border border-aws-orange/40 text-aws-orange text-xs font-semibold px-2 py-0.5 rounded-full">AWS Bedrock</span>
+                    </span>
+                    <p class="text-xs text-slate-400 font-mono">Bharat Builds Tour 2026 • Track: Ship It</p>
+                </div>
+            </div>
+
+            <!-- Nav Links -->
+            <nav class="hidden md:flex items-center space-x-8 text-sm font-medium text-slate-300">
+                <a href="#why-this" class="hover:text-aws-orange transition-colors">Why This</a>
+                <a href="#pipeline" class="hover:text-aws-orange transition-colors">5-Agent Pipeline</a>
+                <a href="#architecture" class="hover:text-aws-orange transition-colors">AWS Architecture</a>
+                <a href="#audit-demo" class="hover:text-aws-orange transition-colors">Interactive Audit</a>
+                <a href="#output" class="hover:text-aws-orange transition-colors">Obsidian & PDF</a>
+                <a href="#judging" class="hover:text-aws-orange transition-colors">Judging Fit</a>
+                <a href="#roadmap" class="hover:text-aws-orange transition-colors">4-Day Roadmap</a>
+            </nav>
+
+            <!-- Action Buttons -->
+            <div class="flex items-center space-x-4">
+                <a href="#audit-demo" class="hidden sm:inline-flex items-center px-4 py-2 text-xs font-semibold rounded-lg bg-aws-orange hover:bg-aws-light text-slate-950 transition-all shadow-md hover:shadow-lg">
+                    <i class="fa-solid fa-play mr-2"></i> Try Verification Demo
+                </a>
+                <a href="https://github.com/phanendra-teja/3D-PointCloud-Classification" target="_blank" class="text-slate-400 hover:text-white transition-colors text-lg">
+                    <i class="fa-brands fa-github"></i>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="relative pt-12 pb-20 md:pt-20 md:pb-32 overflow-hidden">
+        <!-- Background Ambient Lights -->
+        <div class="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[350px] bg-aws-orange/15 rounded-full blur-[120px] -z-10"></div>
+        <div class="absolute top-1/3 left-1/3 w-[450px] h-[300px] bg-obsidian-purple/20 rounded-full blur-[140px] -z-10"></div>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <!-- Event Banner Badge -->
+            <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-slate-900/90 border border-slate-700/80 mb-8 shadow-inner">
+                <span class="flex h-2 w-2 rounded-full bg-emerald-400 animate-ping"></span>
+                <span class="text-xs font-semibold text-slate-300">
+                    <strong class="text-aws-orange">WeMakeDevs × AWS</strong> • First Commit — Bharat Builds Tour (Sept 17–20, 2026)
+                </span>
+                <span class="text-slate-500">•</span>
+                <span class="text-xs font-mono text-purple-400">Track: Ship It</span>
+            </div>
+
+            <!-- Main Headline -->
+            <h1 class="text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight text-white mb-6 leading-none">
+                Transform Syllabi & Prof Docs into <br class="hidden sm:block"/>
+                <span class="text-gradient-aws">Audited, Verified Study Vaults</span>
+            </h1>
+
+            <p class="max-w-3xl mx-auto text-lg sm:text-xl text-slate-300 font-normal mb-10 leading-relaxed">
+                The syllabus is the spine. Every generated study note links back to a specific topic, and every single claim is strictly verified against source chunks. Unbacked claims get flagged—eliminating confident hallucinations before exam day.
+            </p>
+
+            <!-- Hero Action Buttons -->
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
+                <a href="#audit-demo" class="w-full sm:w-auto px-8 py-4 rounded-xl bg-gradient-to-r from-aws-orange to-aws-light text-slate-950 font-bold text-base shadow-lg shadow-aws-orange/20 hover:scale-[1.02] transition-all flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-shield-halved"></i>
+                    See Claim Verification Engine
+                </a>
+                <a href="#architecture" class="w-full sm:w-auto px-8 py-4 rounded-xl glass-panel hover:bg-slate-800 text-white font-semibold text-base border border-slate-700 hover:border-aws-orange/50 transition-all flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-diagram-project text-aws-orange"></i>
+                    AWS Serverless Architecture
+                </a>
+            </div>
+
+            <!-- Quick Metrics / Key Differentiators Bar -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-5xl mx-auto text-left">
+                <div class="glass-card p-5 rounded-2xl border-l-4 border-l-aws-orange">
+                    <div class="text-xs font-mono uppercase text-slate-400 mb-1">01. Coverage Audit</div>
+                    <div class="text-lg font-bold text-white">Zero Missing Topics</div>
+                    <div class="text-xs text-slate-400 mt-1">Surfaces syllabus topics missing in prof docs</div>
+                </div>
+                <div class="glass-card p-5 rounded-2xl border-l-4 border-l-emerald-500">
+                    <div class="text-xs font-mono uppercase text-slate-400 mb-1">02. Verifier Agent</div>
+                    <div class="text-lg font-bold text-white">100% Source Traced</div>
+                    <div class="text-xs text-slate-400 mt-1">Flags unbacked claims (<code class="text-amber-400 font-mono text-[10px]">⚠️ not in provided material</code>)</div>
+                </div>
+                <div class="glass-card p-5 rounded-2xl border-l-4 border-l-obsidian-purple">
+                    <div class="text-xs font-mono uppercase text-slate-400 mb-1">03. Dual Artifacts</div>
+                    <div class="text-lg font-bold text-white">Obsidian + Pandoc</div>
+                    <div class="text-xs text-slate-400 mt-1">Linked markdown vault + rendered exam study PDF</div>
+                </div>
+                <div class="glass-card p-5 rounded-2xl border-l-4 border-l-sky-500">
+                    <div class="text-xs font-mono uppercase text-slate-400 mb-1">04. AWS Stack</div>
+                    <div class="text-lg font-bold text-white">Bedrock + OpenSearch</div>
+                    <div class="text-xs text-slate-400 mt-1">S3, Textract, Step Functions, Strands SDK</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Why This (Problem vs Solution) Section -->
+    <section id="why-this" class="py-20 bg-slate-950/60 border-y border-slate-800/80">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-3xl mx-auto mb-16">
+                <span class="text-aws-orange font-mono text-xs font-bold uppercase tracking-widest bg-aws-squid/80 px-3 py-1 rounded-full border border-aws-orange/30">
+                    The Problem & Our Differentiation
+                </span>
+                <h2 class="text-3xl sm:text-5xl font-extrabold text-white mt-4 tracking-tight">
+                    Why Not Just "AI Notes" or a Chatbot?
+                </h2>
+                <p class="text-slate-400 mt-4 text-base sm:text-lg">
+                    Generic summarizers and chatbots-over-PDFs produce free-floating text prone to silent hallucinations. Confidently wrong notes are worse than no notes when preparing for exams.
+                </p>
+            </div>
+
+            <!-- Comparison Cards -->
+            <div class="grid md:grid-cols-2 gap-8">
+                <!-- Generic Summarizer Card -->
+                <div class="glass-panel p-8 rounded-3xl border-red-500/20 relative overflow-hidden group hover:border-red-500/40 transition-all">
+                    <div class="absolute -right-10 -top-10 w-40 h-40 bg-red-500/10 rounded-full blur-2xl"></div>
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="w-12 h-12 rounded-xl bg-red-500/10 border border-red-500/30 flex items-center justify-center text-red-400 text-xl font-bold">
+                            <i class="fa-solid fa-circle-xmark"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-white">Generic AI Summarizers & PDF Chatbots</h3>
+                            <p class="text-xs text-slate-400 font-mono">Standard RAG / Black-box Summarization</p>
+                        </div>
+                    </div>
+
+                    <ul class="space-y-4 text-sm text-slate-300">
+                        <li class="flex items-start gap-3">
+                            <i class="fa-solid fa-xmark text-red-400 mt-1"></i>
+                            <span><strong>No Syllabus Spine:</strong> Generates free-floating summaries without auditing whether syllabus topics are covered.</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <i class="fa-solid fa-xmark text-red-400 mt-1"></i>
+                            <span><strong>Silent Hallucinations:</strong> Blends real content with believable fabricated claims, misleading students during revision.</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <i class="fa-solid fa-xmark text-red-400 mt-1"></i>
+                            <span><strong>Blind to Coverage Gaps:</strong> Fails to tell you when a syllabus topic has zero supporting documents uploaded by the professor.</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Syllabus2Notes Engine Card -->
+                <div class="glass-panel p-8 rounded-3xl border-aws-orange/30 relative overflow-hidden group hover:border-aws-orange/60 transition-all glow-aws">
+                    <div class="absolute -right-10 -top-10 w-40 h-40 bg-aws-orange/10 rounded-full blur-2xl"></div>
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="w-12 h-12 rounded-xl bg-aws-orange/10 border border-aws-orange/30 flex items-center justify-center text-aws-orange text-xl font-bold">
+                            <i class="fa-solid fa-shield-check"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-white">Syllabus-to-Notes Agent Pipeline</h3>
+                            <p class="text-xs text-aws-orange font-mono">Syllabus Tree Driven + Verifier Agent</p>
+                        </div>
+                    </div>
+
+                    <ul class="space-y-4 text-sm text-slate-200">
+                        <li class="flex items-start gap-3">
+                            <i class="fa-solid fa-check text-emerald-400 mt-1"></i>
+                            <span><strong>1. Coverage Auditing:</strong> Constructs a strict topic tree from the syllabus first. Identifies topics with zero prof doc support.</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <i class="fa-solid fa-check text-emerald-400 mt-1"></i>
+                            <span><strong>2. Claim Verification:</strong> The Verifier agent cross-checks every single generated claim against source chunks and explicitly flags unbacked statements.</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <i class="fa-solid fa-check text-emerald-400 mt-1"></i>
+                            <span><strong>3. Fixed Structured Notes:</strong> Generates uniform study sections: Definition → Intuition → Example/Case Study → 2 Likely Exam Questions.</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Interactive Verification Demo Section -->
+    <section id="audit-demo" class="py-20 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-3xl mx-auto mb-12">
+                <span class="text-emerald-400 font-mono text-xs font-bold uppercase tracking-widest bg-emerald-950/60 px-3 py-1 rounded-full border border-emerald-500/30">
+                    Live Concept Interactive Demo
+                </span>
+                <h2 class="text-3xl sm:text-5xl font-extrabold text-white mt-4 tracking-tight">
+                    See the Verifier Agent in Action
+                </h2>
+                <p class="text-slate-400 mt-3 text-base sm:text-lg">
+                    Test Subject: <strong>Ethics Syllabus</strong> (broad units, prose-style, no numbered theorems). Compare raw generated draft vs. Verifier-checked output.
+                </p>
+            </div>
+
+            <!-- Demo Control Toggle -->
+            <div class="glass-panel p-2 rounded-2xl max-w-md mx-auto mb-8 flex items-center justify-between">
+                <button id="btn-raw" onclick="setDemoMode('raw')" class="w-1/2 py-2.5 rounded-xl text-xs font-bold transition-all text-slate-400 hover:text-white">
+                    <i class="fa-solid fa-triangle-exclamation text-amber-400 mr-1.5"></i> Unverified Draft
+                </button>
+                <button id="btn-verified" onclick="setDemoMode('verified')" class="w-1/2 py-2.5 rounded-xl text-xs font-bold bg-aws-orange text-slate-950 shadow-md transition-all">
+                    <i class="fa-solid fa-circle-check mr-1.5"></i> Verifier Audited
+                </button>
+            </div>
+
+            <!-- Interactive Demo Showcase Box -->
+            <div class="glass-panel rounded-3xl p-6 sm:p-8 border border-slate-700/80 max-w-4xl mx-auto shadow-2xl">
+                <!-- Header Info -->
+                <div class="flex flex-wrap items-center justify-between gap-4 pb-6 border-b border-slate-800 font-mono text-xs">
+                    <div class="flex items-center gap-2 text-slate-300">
+                        <i class="fa-solid fa-file-contract text-aws-orange"></i>
+                        <span>Topic: <strong>Unit 2: Utilitarianism vs Deontology</strong></span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="px-2.5 py-1 rounded-md bg-slate-800 text-slate-300 border border-slate-700">Source Docs: Prof_Ethics_Lecture2.pdf</span>
+                        <span id="demo-badge" class="px-2.5 py-1 rounded-md bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 font-bold">STATUS: VERIFIED</span>
+                    </div>
+                </div>
+
+                <!-- Study Note Content Area -->
+                <div class="mt-6 space-y-6 text-sm leading-relaxed">
+                    <!-- Section: Definition -->
+                    <div class="glass-card p-5 rounded-2xl border-l-4 border-l-purple-500">
+                        <h4 class="text-xs font-mono uppercase text-purple-400 font-bold mb-2">1. Core Definition</h4>
+                        <p class="text-slate-200">
+                            Utilitarianism evaluates actions based on their consequential outcome—maximizing net utility for the greatest number. Deontology, as formulated by Immanuel Kant, posits that moral actions are intrinsically right or wrong regardless of consequences, guided by the Categorical Imperative.
+                        </p>
+                        <div class="mt-3 flex items-center gap-2 text-[11px] font-mono text-emerald-400 bg-emerald-950/40 px-3 py-1.5 rounded-lg border border-emerald-800/50">
+                            <i class="fa-solid fa-link"></i> Matched Source Chunk #12 (Prof_Ethics_Lecture2.pdf, Page 4)
+                        </div>
+                    </div>
+
+                    <!-- Section: Key Claim with Flag -->
+                    <div id="claim-box" class="glass-card p-5 rounded-2xl border-l-4 border-l-amber-500 transition-all">
+                        <h4 class="text-xs font-mono uppercase text-amber-400 font-bold mb-2">2. Philosophical Context & Nuance</h4>
+                        <p id="claim-text" class="text-slate-200">
+                            Kant famously argued that lying is morally impermissible in all circumstances, even to save an innocent life from an inquiring murderer. <span id="flag-span" class="inline-block mt-2 sm:mt-0 font-mono text-xs bg-amber-500/20 text-amber-300 px-2.5 py-1 rounded border border-amber-500/40 font-bold">⚠️ not in provided material (Added via general LLM parametric knowledge)</span>
+                        </p>
+                        <div id="claim-audit-note" class="mt-3 text-xs font-mono text-amber-300 bg-amber-950/40 p-3 rounded-lg border border-amber-800/50">
+                            <strong>Verifier Agent Audit:</strong> The specific "inquiring murderer" paradox was not present in the professor's uploaded slides or lecture notes. Marked so the student knows this specific detail was absent from class materials.
+                        </div>
+                    </div>
+
+                    <!-- Section: Exam Questions -->
+                    <div class="glass-card p-5 rounded-2xl border-l-4 border-l-aws-orange">
+                        <h4 class="text-xs font-mono uppercase text-aws-orange font-bold mb-2">3. Likely Exam Questions</h4>
+                        <div class="space-y-3">
+                            <div class="p-3 bg-slate-900/80 rounded-xl border border-slate-800">
+                                <span class="font-bold text-white block mb-1">Q1: Contrast Utilitarianism and Kantian Deontology using a clinical triage example.</span>
+                                <span class="text-xs text-slate-400">Answer key grounded in Chunk #15: Utilitarianism prioritizes saving the maximum number of lives; Deontology respects patient autonomy and duties regardless of outcome.</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 5-Agent Pipeline Architecture -->
+    <section id="pipeline" class="py-20 bg-slate-950/60 border-y border-slate-800/80">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-3xl mx-auto mb-16">
+                <span class="text-aws-orange font-mono text-xs font-bold uppercase tracking-widest bg-aws-squid/80 px-3 py-1 rounded-full border border-aws-orange/30">
+                    Strands Agent Orchestration
+                </span>
+                <h2 class="text-3xl sm:text-5xl font-extrabold text-white mt-4 tracking-tight">
+                    The 5 Specialized Agents
+                </h2>
+                <p class="text-slate-400 mt-3 text-base sm:text-lg">
+                    Instead of a monolithic prompt, our pipeline divides study generation into 5 deterministic agent roles orchestrated on Bedrock.
+                </p>
+            </div>
+
+            <!-- Agent Flow Steps -->
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-4 relative">
+
+                <!-- Agent 1: Parser -->
+                <div onclick="selectAgent(1)" id="agent-card-1" class="glass-card p-5 rounded-2xl cursor-pointer transition-all border-2 border-aws-orange bg-slate-900/90 hover:scale-[1.02]">
+                    <div class="w-10 h-10 rounded-xl bg-aws-orange/20 text-aws-orange flex items-center justify-center font-bold text-lg mb-3">1</div>
+                    <h3 class="text-base font-bold text-white mb-1">1. Parser</h3>
+                    <p class="text-xs text-slate-400 font-mono mb-2">Syllabus → JSON Tree</p>
+                    <p class="text-xs text-slate-300">Parses unstructured prose syllabi into Unit → Topic → Subtopic nodes using strict Bedrock JSON schema.</p>
+                </div>
+
+                <!-- Agent 2: Mapper -->
+                <div onclick="selectAgent(2)" id="agent-card-2" class="glass-card p-5 rounded-2xl cursor-pointer transition-all border-2 border-transparent hover:border-aws-orange/50">
+                    <div class="w-10 h-10 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center font-bold text-lg mb-3">2</div>
+                    <h3 class="text-base font-bold text-white mb-1">2. Mapper</h3>
+                    <p class="text-xs text-slate-400 font-mono mb-2">Topics → OpenSearch</p>
+                    <p class="text-xs text-slate-300">Queries Titan vector embeddings to map relevant prof doc chunks to each topic node. Detects gaps.</p>
+                </div>
+
+                <!-- Agent 3: Writer -->
+                <div onclick="selectAgent(3)" id="agent-card-3" class="glass-card p-5 rounded-2xl cursor-pointer transition-all border-2 border-transparent hover:border-aws-orange/50">
+                    <div class="w-10 h-10 rounded-xl bg-sky-500/20 text-sky-400 flex items-center justify-center font-bold text-lg mb-3">3</div>
+                    <h3 class="text-base font-bold text-white mb-1">3. Writer</h3>
+                    <p class="text-xs text-slate-400 font-mono mb-2">Topic → Draft Note</p>
+                    <p class="text-xs text-slate-300">Drafts uniform sections: Definition, Intuition, Case Study, and 2 Exam Questions per topic.</p>
+                </div>
+
+                <!-- Agent 4: Verifier -->
+                <div onclick="selectAgent(4)" id="agent-card-4" class="glass-card p-5 rounded-2xl cursor-pointer transition-all border-2 border-transparent hover:border-aws-orange/50">
+                    <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-lg mb-3">4</div>
+                    <h3 class="text-base font-bold text-white mb-1">4. Verifier</h3>
+                    <p class="text-xs text-slate-400 font-mono mb-2">Claim Audit Engine</p>
+                    <p class="text-xs text-slate-300">Audits draft notes against source chunks. Flags any unbacked statement (`⚠️ not in material`).</p>
+                </div>
+
+                <!-- Agent 5: Assembler -->
+                <div onclick="selectAgent(5)" id="agent-card-5" class="glass-card p-5 rounded-2xl cursor-pointer transition-all border-2 border-transparent hover:border-aws-orange/50">
+                    <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold text-lg mb-3">5</div>
+                    <h3 class="text-base font-bold text-white mb-1">5. Assembler</h3>
+                    <p class="text-xs text-slate-400 font-mono mb-2">Vault & PDF Renderer</p>
+                    <p class="text-xs text-slate-300">Builds Obsidian `.md` vault with Map of Content (MOC) & wikilinks, then compiles to Pandoc PDF.</p>
+                </div>
+
+            </div>
+
+            <!-- Interactive Detail Viewer for Selected Agent -->
+            <div class="mt-8 glass-panel p-6 sm:p-8 rounded-3xl border border-slate-700">
+                <div class="flex items-center justify-between mb-4 border-b border-slate-800 pb-4">
+                    <div class="flex items-center gap-3">
+                        <span id="agent-detail-badge" class="px-3 py-1 rounded-md bg-aws-orange text-slate-950 text-xs font-bold">AGENT 1</span>
+                        <h3 id="agent-detail-title" class="text-lg font-bold text-white">Parser Agent Details</h3>
+                    </div>
+                    <span id="agent-detail-model" class="text-xs font-mono text-aws-orange bg-aws-squid px-2.5 py-1 rounded border border-aws-orange/30">Bedrock Claude 3.5 / Nova Pro</span>
+                </div>
+                <p id="agent-detail-desc" class="text-slate-300 text-sm mb-4 leading-relaxed">
+                    Uses strict JSON Schema formatting on Bedrock to extract hierarchical course trees from unstructured prose syllabi. Doesn't rely on fragile regex patterns.
+                </p>
+                <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 overflow-x-auto font-mono text-xs text-emerald-400">
+                    <pre id="agent-detail-json">{
+  "course": "Ethics 101",
+  "units": [
+    {
+      "unit_id": 1,
+      "title": "Foundational Ethical Frameworks",
+      "topics": [
+        { "id": "1.1", "name": "Utilitarianism (Bentham & Mill)" },
+        { "id": "1.2", "name": "Kantian Deontology & Categorical Imperative" }
+      ]
+    }
+  ]
+}</pre>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- AWS Architecture Diagram Section -->
+    <section id="architecture" class="py-20 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-3xl mx-auto mb-16">
+                <span class="text-aws-orange font-mono text-xs font-bold uppercase tracking-widest bg-aws-squid/80 px-3 py-1 rounded-full border border-aws-orange/30">
+                    Cloud Native & Serverless
+                </span>
+                <h2 class="text-3xl sm:text-5xl font-extrabold text-white mt-4 tracking-tight">
+                    AWS Architecture
+                </h2>
+                <p class="text-slate-400 mt-3 text-base sm:text-lg">
+                    Deployed entirely on AWS serverless services in full compliance with the hackathon's "Built on AWS" criteria.
+                </p>
+            </div>
+
+            <!-- AWS Service Workflow Grid -->
+            <div class="glass-panel p-8 sm:p-12 rounded-3xl border border-slate-700/80 shadow-2xl relative overflow-hidden">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 text-center">
+
+                    <!-- AWS Step 1: Ingestion -->
+                    <div class="glass-card p-6 rounded-2xl relative border border-slate-800 hover:border-aws-orange/50 transition-all">
+                        <div class="w-14 h-14 mx-auto mb-4 rounded-2xl bg-aws-squid border border-aws-orange/40 flex items-center justify-center text-aws-orange text-2xl">
+                            <i class="fa-solid fa-box-archive"></i>
+                        </div>
+                        <h4 class="text-base font-bold text-white mb-1">Amazon S3</h4>
+                        <p class="text-xs text-aws-orange font-mono mb-2">Raw Document Store</p>
+                        <p class="text-xs text-slate-400">Stores syllabus PDF & professor lecture slides/notes.</p>
+                    </div>
+
+                    <!-- AWS Step 2: Extraction -->
+                    <div class="glass-card p-6 rounded-2xl relative border border-slate-800 hover:border-aws-orange/50 transition-all">
+                        <div class="w-14 h-14 mx-auto mb-4 rounded-2xl bg-aws-squid border border-aws-orange/40 flex items-center justify-center text-aws-orange text-2xl">
+                            <i class="fa-solid fa-file-invoice"></i>
+                        </div>
+                        <h4 class="text-base font-bold text-white mb-1">Amazon Textract</h4>
+                        <p class="text-xs text-aws-orange font-mono mb-2">Layout Parsing</p>
+                        <p class="text-xs text-slate-400">Layout-aware document extraction preserving tables and section headers.</p>
+                    </div>
+
+                    <!-- AWS Step 3: Vector Store -->
+                    <div class="glass-card p-6 rounded-2xl relative border border-slate-800 hover:border-aws-orange/50 transition-all">
+                        <div class="w-14 h-14 mx-auto mb-4 rounded-2xl bg-aws-squid border border-aws-orange/40 flex items-center justify-center text-aws-orange text-2xl">
+                            <i class="fa-solid fa-database"></i>
+                        </div>
+                        <h4 class="text-base font-bold text-white mb-1">OpenSearch Serverless</h4>
+                        <p class="text-xs text-aws-orange font-mono mb-2">Vector Search + Titan</p>
+                        <p class="text-xs text-slate-400">Stores chunks & Amazon Bedrock Titan embeddings for precise retrieval.</p>
+                    </div>
+
+                    <!-- AWS Step 4: Orchestration -->
+                    <div class="glass-card p-6 rounded-2xl relative border border-slate-800 hover:border-aws-orange/50 transition-all">
+                        <div class="w-14 h-14 mx-auto mb-4 rounded-2xl bg-aws-squid border border-aws-orange/40 flex items-center justify-center text-aws-orange text-2xl">
+                            <i class="fa-solid fa-network-wired"></i>
+                        </div>
+                        <h4 class="text-base font-bold text-white mb-1">Step Functions + Bedrock</h4>
+                        <p class="text-xs text-aws-orange font-mono mb-2">Agent Execution Graph</p>
+                        <p class="text-xs text-slate-400">Orchestrates the 5 Strands agents in a managed, fault-tolerant workflow.</p>
+                    </div>
+
+                </div>
+
+                <!-- AWS Step Functions Execution Graph Highlight -->
+                <div class="mt-10 bg-slate-950/80 p-6 rounded-2xl border border-slate-800 flex flex-col md:flex-row items-center justify-between gap-6">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 text-xl">
+                            <i class="fa-solid fa-diagram-next"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-sm font-bold text-white">EventBridge Triggered End-to-End Pipeline</h4>
+                            <p class="text-xs text-slate-400">S3 ObjectCreated → EventBridge → Step Functions State Machine → Lambda / Bedrock → Final S3 Vault Artifact</p>
+                        </div>
+                    </div>
+                    <a href="#judging" class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 transition-all whitespace-nowrap">
+                        View Judging Criteria Fit
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Output Artifacts Section (Obsidian Vault + Pandoc PDF) -->
+    <section id="output" class="py-20 bg-slate-950/60 border-y border-slate-800/80">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-3xl mx-auto mb-16">
+                <span class="text-obsidian-accent font-mono text-xs font-bold uppercase tracking-widest bg-purple-950/60 px-3 py-1 rounded-full border border-purple-500/30">
+                    Dual Output Formats
+                </span>
+                <h2 class="text-3xl sm:text-5xl font-extrabold text-white mt-4 tracking-tight">
+                    Obsidian Vault + Rendered PDF
+                </h2>
+                <p class="text-slate-400 mt-3 text-base sm:text-lg">
+                    Students get both a dynamic, interconnected Markdown vault for Obsidian and a clean, beautifully formatted study PDF rendered via Pandoc.
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-8">
+                <!-- Obsidian Vault Preview -->
+                <div class="glass-panel p-6 sm:p-8 rounded-3xl border border-purple-500/30 glow-purple">
+                    <div class="flex items-center justify-between mb-6">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-obsidian-purple flex items-center justify-center text-white font-bold">
+                                <i class="fa-solid fa-gem"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-bold text-white">Obsidian Vault (.md)</h3>
+                                <p class="text-xs text-purple-300 font-mono">Linked Markdown Knowledge Graph</p>
+                            </div>
+                        </div>
+                        <span class="text-xs font-mono bg-purple-950 text-purple-300 px-2.5 py-1 rounded border border-purple-700">Wikilinks Enabled</span>
+                    </div>
+
+                    <div class="bg-obsidian-dark p-4 rounded-2xl border border-purple-900/40 text-xs font-mono leading-relaxed space-y-3">
+                        <div class="text-slate-400"># 🗺️ Index - Map of Content (MOC)</div>
+                        <div class="text-purple-300 font-semibold">[[Unit-1-Ethical-Frameworks]]</div>
+                        <div class="text-purple-300 font-semibold">[[Unit-2-Utilitarianism-vs-Deontology]]</div>
+                        <div class="text-purple-300 font-semibold">[[Unit-3-Virtue-Ethics-And-Modern-Applications]]</div>
+                        <div class="pt-2 border-t border-slate-800 text-slate-400">
+                            Topic Note: [[Unit-2-Utilitarianism-vs-Deontology]]<br/>
+                            - Core Topic: Utilitarianism<br/>
+                            - Cross-link: See also [[Unit-1-Ethical-Frameworks#Consequentialism]]
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pandoc Study PDF Preview -->
+                <div class="glass-panel p-6 sm:p-8 rounded-3xl border border-aws-orange/30">
+                    <div class="flex items-center justify-between mb-6">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-aws-orange flex items-center justify-center text-slate-950 font-bold">
+                                <i class="fa-solid fa-file-pdf"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-bold text-white">Rendered Study PDF</h3>
+                                <p class="text-xs text-aws-orange font-mono">Pandoc Custom Typography & Callouts</p>
+                            </div>
+                        </div>
+                        <span class="text-xs font-mono bg-aws-squid text-aws-orange px-2.5 py-1 rounded border border-aws-orange/30">Exam-Ready</span>
+                    </div>
+
+                    <div class="bg-slate-900 p-4 rounded-2xl border border-slate-800 text-xs font-mono leading-relaxed space-y-3">
+                        <div class="p-3 bg-white text-slate-900 rounded-xl shadow font-sans">
+                            <h4 class="font-bold text-base border-b pb-1 mb-2 text-slate-900">Unit 2: Deontology & Categorical Imperative</h4>
+                            <p class="text-xs text-slate-700 leading-normal">
+                                Deontology focuses on duty and absolute moral rules...
+                            </p>
+                            <div class="mt-2 p-2 bg-amber-50 border-l-2 border-amber-500 text-[11px] text-amber-900">
+                                <strong>⚠️ Unbacked Claim Audit Note:</strong> Detail regarding the inquiring murderer paradox was not found in prof uploaded slides.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Optional NotebookLM Note -->
+            <div class="mt-8 glass-card p-5 rounded-2xl border-dashed border border-slate-700 flex items-center justify-between gap-4">
+                <div class="flex items-center gap-3">
+                    <i class="fa-solid fa-circle-info text-purple-400 text-lg"></i>
+                    <p class="text-xs text-slate-300">
+                        <strong>Optional Post-Processing:</strong> Students can locally push the finished vault into their own NotebookLM account for personal voice podcasts or audio overviews. <em>(Kept out of the scored AWS cloud pipeline for strict architectural purity & reliability).</em>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Hackathon Judging Fit Matrix -->
+    <section id="judging" class="py-20 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-3xl mx-auto mb-16">
+                <span class="text-aws-orange font-mono text-xs font-bold uppercase tracking-widest bg-aws-squid/80 px-3 py-1 rounded-full border border-aws-orange/30">
+                    Judging Criteria Alignment
+                </span>
+                <h2 class="text-3xl sm:text-5xl font-extrabold text-white mt-4 tracking-tight">
+                    How This Project Scores
+                </h2>
+                <p class="text-slate-400 mt-3 text-base sm:text-lg">
+                    Mapped directly to the Bharat Builds Tour evaluation rubric.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                <!-- Idea & Impact -->
+                <div class="glass-card p-5 rounded-2xl border-t-4 border-t-aws-orange">
+                    <div class="text-aws-orange font-bold text-sm mb-2"><i class="fa-solid fa-lightbulb mr-1.5"></i> Idea & Impact</div>
+                    <p class="text-xs text-slate-300">Coverage gaps + hallucination flags solve a critical real-world exam preparation failure mode.</p>
+                </div>
+
+                <!-- Built on AWS -->
+                <div class="glass-card p-5 rounded-2xl border-t-4 border-t-sky-500">
+                    <div class="text-sky-400 font-bold text-sm mb-2"><i class="fa-brands fa-aws mr-1.5"></i> Built on AWS</div>
+                    <p class="text-xs text-slate-300">S3, Textract, OpenSearch Serverless, Bedrock Titan + Claude, Step Functions, Lambda.</p>
+                </div>
+
+                <!-- Learning -->
+                <div class="glass-card p-5 rounded-2xl border-t-4 border-t-purple-500">
+                    <div class="text-purple-400 font-bold text-sm mb-2"><i class="fa-solid fa-graduation-cap mr-1.5"></i> Learning</div>
+                    <p class="text-xs text-slate-300">First real implementation of Textract layout parsing, OpenSearch vector retrieval & Strands multi-agent orchestration.</p>
+                </div>
+
+                <!-- Execution -->
+                <div class="glass-card p-5 rounded-2xl border-t-4 border-t-emerald-500">
+                    <div class="text-emerald-400 font-bold text-sm mb-2"><i class="fa-solid fa-gears mr-1.5"></i> Execution</div>
+                    <p class="text-xs text-slate-300">Working end-to-end pipeline tested on a complex prose Ethics subject beats broad half-built tools.</p>
+                </div>
+
+                <!-- Demo Video -->
+                <div class="glass-card p-5 rounded-2xl border-t-4 border-t-amber-500">
+                    <div class="text-amber-400 font-bold text-sm mb-2"><i class="fa-solid fa-video mr-1.5"></i> Demo Video</div>
+                    <p class="text-xs text-slate-300">Clear 3-minute walk-through of Step Functions execution graph + raw docs → verified notes transformation.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 4-Day Hackathon Roadmap Timeline -->
+    <section id="roadmap" class="py-20 bg-slate-950/60 border-y border-slate-800/80">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-3xl mx-auto mb-16">
+                <span class="text-aws-orange font-mono text-xs font-bold uppercase tracking-widest bg-aws-squid/80 px-3 py-1 rounded-full border border-aws-orange/30">
+                    Execution Plan
+                </span>
+                <h2 class="text-3xl sm:text-5xl font-extrabold text-white mt-4 tracking-tight">
+                    Four-Day Hackathon Roadmap
+                </h2>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <!-- Day 1 -->
+                <div class="glass-panel p-6 rounded-2xl border border-slate-800 border-l-4 border-l-aws-orange">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-xs font-mono text-aws-orange font-bold uppercase">Day 1 (Today)</span>
+                        <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 text-[10px] font-bold">COMPLETED</span>
+                    </div>
+                    <h3 class="text-base font-bold text-white mb-2">Syllabus Parser</h3>
+                    <p class="text-xs text-slate-400">One real ethics PDF → structured JSON topic tree, verified by eye against source.</p>
+                </div>
+
+                <!-- Day 2 -->
+                <div class="glass-panel p-6 rounded-2xl border border-slate-800 border-l-4 border-l-purple-500">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-xs font-mono text-purple-400 font-bold uppercase">Day 2</span>
+                        <span class="px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 text-[10px] font-bold">IN PROGRESS</span>
+                    </div>
+                    <h3 class="text-base font-bold text-white mb-2">Textract + OpenSearch</h3>
+                    <p class="text-xs text-slate-400">Document extraction & retrieval pipeline; Mapper + Writer generating rough per-topic drafts.</p>
+                </div>
+
+                <!-- Day 3 -->
+                <div class="glass-panel p-6 rounded-2xl border border-slate-800 border-l-4 border-l-sky-500">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-xs font-mono text-sky-400 font-bold uppercase">Day 3</span>
+                        <span class="px-2 py-0.5 rounded bg-slate-800 text-slate-400 text-[10px] font-bold">PLANNED</span>
+                    </div>
+                    <h3 class="text-base font-bold text-white mb-2">Verifier + Pandoc PDF</h3>
+                    <p class="text-xs text-slate-400">Verifier claim audit agent + Pandoc PDF template with callout boxes for flagged claims.</p>
+                </div>
+
+                <!-- Day 4 -->
+                <div class="glass-panel p-6 rounded-2xl border border-slate-800 border-l-4 border-l-emerald-500">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-xs font-mono text-emerald-400 font-bold uppercase">Day 4</span>
+                        <span class="px-2 py-0.5 rounded bg-slate-800 text-slate-400 text-[10px] font-bold">FINAL DEPLOY</span>
+                    </div>
+                    <h3 class="text-base font-bold text-white mb-2">AWS Deploy & Video</h3>
+                    <p class="text-xs text-slate-400">Deploy (S3 → EventBridge → Step Functions → Lambda → Bedrock), record 3-min demo video, publish blog post.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-12 border-t border-slate-800/80 bg-slate-950 text-slate-400 text-xs">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-6">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-lg bg-aws-orange text-slate-950 flex items-center justify-center font-bold text-sm">
+                    <i class="fa-solid fa-brain"></i>
+                </div>
+                <div>
+                    <span class="font-bold text-white text-sm">Syllabus-to-Notes Agent Pipeline</span>
+                    <p class="text-slate-500 text-[11px]">First Commit — Bharat Builds Tour (WeMakeDevs × AWS)</p>
+                </div>
+            </div>
+
+            <div class="flex items-center space-x-6 text-slate-400">
+                <a href="https://aws.amazon.com/bedrock/" target="_blank" class="hover:text-aws-orange transition-colors">AWS Bedrock</a>
+                <a href="https://aws.amazon.com/opensearch-service/" target="_blank" class="hover:text-aws-orange transition-colors">OpenSearch Serverless</a>
+                <a href="https://aws.amazon.com/textract/" target="_blank" class="hover:text-aws-orange transition-colors">Amazon Textract</a>
+            </div>
+
+            <div class="text-slate-500 font-mono">
+                Built with <i class="fa-solid fa-heart text-red-500"></i> on AWS
+            </div>
+        </div>
+    </footer>
+
+    <!-- Client-Side Interactivity Logic -->
+    <script>
+        // Interactive Verifier Demo Toggle
+        function setDemoMode(mode) {
+            const btnRaw = document.getElementById('btn-raw');
+            const btnVerified = document.getElementById('btn-verified');
+            const claimBox = document.getElementById('claim-box');
+            const flagSpan = document.getElementById('flag-span');
+            const claimAuditNote = document.getElementById('claim-audit-note');
+            const demoBadge = document.getElementById('demo-badge');
+
+            if (mode === 'raw') {
+                btnRaw.className = 'w-1/2 py-2.5 rounded-xl text-xs font-bold bg-amber-500 text-slate-950 shadow-md transition-all';
+                btnVerified.className = 'w-1/2 py-2.5 rounded-xl text-xs font-bold transition-all text-slate-400 hover:text-white';
+
+                flagSpan.classList.add('hidden');
+                claimAuditNote.classList.add('hidden');
+                claimBox.className = 'glass-card p-5 rounded-2xl border-l-4 border-l-slate-600 transition-all';
+                demoBadge.className = 'px-2.5 py-1 rounded-md bg-amber-500/20 text-amber-400 border border-amber-500/40 font-bold';
+                demoBadge.innerText = 'STATUS: UNAUDITED DRAFT';
+            } else {
+                btnVerified.className = 'w-1/2 py-2.5 rounded-xl text-xs font-bold bg-aws-orange text-slate-950 shadow-md transition-all';
+                btnRaw.className = 'w-1/2 py-2.5 rounded-xl text-xs font-bold transition-all text-slate-400 hover:text-white';
+
+                flagSpan.classList.remove('hidden');
+                claimAuditNote.classList.remove('hidden');
+                claimBox.className = 'glass-card p-5 rounded-2xl border-l-4 border-l-amber-500 transition-all';
+                demoBadge.className = 'px-2.5 py-1 rounded-md bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 font-bold';
+                demoBadge.innerText = 'STATUS: VERIFIED';
+            }
+        }
+
+        // Agent Pipeline Interactive Tabs
+        const agentsData = {
+            1: {
+                badge: "AGENT 1: PARSER",
+                title: "1. Syllabus Parser Agent",
+                model: "Bedrock Claude 3.5 / Nova Pro",
+                desc: "Uses strict JSON Schema formatting on Bedrock to extract hierarchical course trees (Unit → Topic → Subtopic) from unstructured prose syllabi.",
+                json: `{
+  "course": "Ethics 101",
+  "units": [
+    {
+      "unit_id": 1,
+      "title": "Foundational Ethical Frameworks",
+      "topics": [
+        { "id": "1.1", "name": "Utilitarianism (Bentham & Mill)" },
+        { "id": "1.2", "name": "Kantian Deontology & Categorical Imperative" }
+      ]
+    }
+  ]
+}`
+            },
+            2: {
+                badge: "AGENT 2: MAPPER",
+                title: "2. OpenSearch Chunks Mapper Agent",
+                model: "Bedrock Titan Embeddings G1",
+                desc: "Queries OpenSearch Serverless vector store for each syllabus topic. Aggregates and links prof lecture chunks. Surfaces topics with 0 uploaded supporting chunks as coverage gaps.",
+                json: `{
+  "topic_id": "1.2",
+  "topic_name": "Kantian Deontology",
+  "retrieved_chunks": [
+    { "chunk_id": "prof_doc_2_chunk_12", "score": 0.892, "source": "Prof_Ethics_Lecture2.pdf" },
+    { "chunk_id": "prof_doc_2_chunk_15", "score": 0.841, "source": "Prof_Ethics_Lecture2.pdf" }
+  ],
+  "coverage_gap": false
+}`
+            },
+            3: {
+                badge: "AGENT 3: WRITER",
+                title: "3. Note Generator Writer Agent",
+                model: "Bedrock Claude 3.5 Sonnet",
+                desc: "Writes uniform study notes for each topic following a strict standard: Definition → Intuition → Case Study → 2 Exam Q&A.",
+                json: `{
+  "topic": "Kantian Deontology",
+  "draft_sections": {
+    "definition": "Deontology assesses moral duty regardless of outcomes...",
+    "intuition": "Acting out of respect for universal moral law...",
+    "exam_questions": ["Q1: Contrast Utilitarianism vs Deontology..."]
+  }
+}`
+            },
+            4: {
+                badge: "AGENT 4: VERIFIER",
+                title: "4. Claim Audit Verifier Agent",
+                model: "Bedrock Claude 3.5 / Nova Pro",
+                desc: "The core differentiator. Takes the Writer's draft notes and cross-checks every sentence against retrieved OpenSearch chunks. Flags unbacked statements explicitly.",
+                json: `{
+  "audited_claims": [
+    { "claim": "Deontology assesses moral duty", "status": "VERIFIED", "source_chunk": "prof_doc_2_chunk_12" },
+    { "claim": "Inquiring murderer paradox example", "status": "UNBACKED", "flag": "⚠️ not in provided material" }
+  ]
+}`
+            },
+            5: {
+                badge: "AGENT 5: ASSEMBLER",
+                title: "5. Obsidian Vault & PDF Assembler Agent",
+                model: "Pandoc + Python Strands SDK",
+                desc: "Assembles the final Obsidian Vault with Map of Content (MOC) index and wikilinks, then invokes Pandoc to render a study PDF with custom callout styling.",
+                json: `{
+  "obsidian_vault": "Ethics_101_Vault/",
+  "generated_files": [
+    "00_MOC_Index.md",
+    "Unit_1_Utilitarianism.md",
+    "Unit_2_Deontology.md"
+  ],
+  "pdf_artifact": "s3://output-bucket/Ethics_101_Study_Notes.pdf"
+}`
+            }
+        };
+
+        function selectAgent(num) {
+            for (let i = 1; i <= 5; i++) {
+                const card = document.getElementById(`agent-card-${i}`);
+                if (i === num) {
+                    card.className = "glass-card p-5 rounded-2xl cursor-pointer transition-all border-2 border-aws-orange bg-slate-900/90 scale-[1.02]";
+                } else {
+                    card.className = "glass-card p-5 rounded-2xl cursor-pointer transition-all border-2 border-transparent hover:border-aws-orange/50";
+                }
+            }
+
+            const data = agentsData[num];
+            document.getElementById('agent-detail-badge').innerText = data.badge;
+            document.getElementById('agent-detail-title').innerText = data.title;
+            document.getElementById('agent-detail-model').innerText = data.model;
+            document.getElementById('agent-detail-desc').innerText = data.desc;
+            document.getElementById('agent-detail-json').innerText = data.json;
+        }
+    </script>
+</body>
+</html>
